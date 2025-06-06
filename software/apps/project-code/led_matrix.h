@@ -9,21 +9,21 @@
 #define G1_PIN   2    // P2 - Green, upper half
 #define G2_PIN   3    // P3 - Green, lower half
 #define B1_PIN   4    // P4 - Blue, upper half
-#define B2_PIN   10   // P10 - Blue, lower half
+#define B2_PIN   5   // P10 - Blue, lower half
 
 // --------------------
 // Row Address Pins (A–D)
 // --------------------
-#define A_PIN    5    // P5 - Row address A
-#define B_PIN    6    // P6 - Row address B
-#define C_PIN    7    // P7 - Row address C
-#define D_PIN    8    // P8 - Row address D
+#define A_PIN    6    // P5 - Row address A
+#define B_PIN    7    // P6 - Row address B
+#define C_PIN    11    // P7 - Row address C
+#define D_PIN    12    // P8 - Row address D
 
 // --------------------
 // Control Pins
 // --------------------
-#define LAT_PIN  11   // P11 - Latch
-#define OE_PIN   12   // P12 - Output Enable (active LOW)
+#define LAT_PIN  14   // P11 - Latch
+#define OE_PIN   15   // P12 - Output Enable (active LOW)
 #define CLK_PIN  13   // P13 - Clock
 
 // Setup all necessary GPIO pins
