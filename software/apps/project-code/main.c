@@ -37,6 +37,9 @@ int main(void) {
     // app_timer_start(infrared_timer, APP_TIMER_TICKS(600), NULL); 
 
     // LED MATRIX
+    // setup_pins();
+
+    // SCREEN
     setup_pins();
     
     
