@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "microbit_v2.h"
 #include "screen.h"
+#include "font5x7.h"
 
 const nrfx_spim_t SPIM_INST = NRFX_SPIM_INSTANCE(2);
 
@@ -201,27 +202,77 @@ void display_init(void) {
     nrf_delay_ms(150);
 }
 
-void display_fill_screen_red(void) {
-    printf("Filling screen with red color...\n");
-    // Set Column Address (0x2A)
-    uint8_t col_addr[] = {0x00, 0x00, 0x00, 0xEF}; // x = 0 to 239
-    display_send_command_with_data(0x2A, col_addr, sizeof(col_addr));
 
-    // Set Page Address (0x2B)
-    uint8_t row_addr[] = {0x00, 0x00, 0x01, 0x3F}; // y = 0 to 319
-    display_send_command_with_data(0x2B, row_addr, sizeof(row_addr));
+void set_address_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    uint8_t data[4];
 
-    // Memory Write (0x2C)
+    // Column address set
+    display_write_command(0x2A);
+    data[0] = x0 >> 8; data[1] = x0 & 0xFF;
+    data[2] = x1 >> 8; data[3] = x1 & 0xFF;
+    display_write_data(data, 4);
+
+    // Page address set
+    display_write_command(0x2B);
+    data[0] = y0 >> 8; data[1] = y0 & 0xFF;
+    data[2] = y1 >> 8; data[3] = y1 & 0xFF;
+    display_write_data(data, 4);
+
+    // Memory write
+    display_write_command(0x2C);
+}
+//////////////////////////////// DRAW FUNCTIONS //
+void draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
+    if (x >= 240 || y >= 320) return;  // Bounds check
+
+    set_address_window(x, y, x, y);
+    uint8_t data[2] = { color >> 8, color & 0xFF };  // RGB565
+    display_write_data(data, 2);
+}
+
+
+
+void draw_filled_rect(int x, int y, int w, int h, uint16_t color) {
+    // Set column address
+    uint8_t col_addr[] = { x >> 8, x & 0xFF, (x + w - 1) >> 8, (x + w - 1) & 0xFF };
+    display_send_command_with_data(0x2A, col_addr, 4);
+
+    // Set row address
+    uint8_t row_addr[] = { y >> 8, y & 0xFF, (y + h - 1) >> 8, (y + h - 1) & 0xFF };
+    display_send_command_with_data(0x2B, row_addr, 4);
+
+    // Memory write
     display_write_command(0x2C);
 
-    // Fill with red color (RGB565: 0xF800)
-    uint8_t red_pixel[] = {0xF8, 0x00};
+    // Prepare pixel data
+    uint8_t pixel[2] = { color >> 8, color & 0xFF };
 
-    // Send 240 * 320 pixels = 76,800 pixels
-    // Each pixel is 2 bytes = 153,600 bytes total
-
-    for (int i = 0; i < 76800; i++) {
-        display_write_data(red_pixel, 2);
+    for (int i = 0; i < w * h; i++) {
+        display_write_data(pixel, 2);
     }
 }
+
+// void draw_filled_rect(int x, int y, int w, int h, uint16_t color) {
+//     // Set address window
+//     set_address_window(x, y, x + w - 1, y + h - 1);
+
+//     // Prepare full buffer
+//     int pixels = w * h;
+//     if (pixels > 4096) pixels = 4096; // Cap to avoid huge stack usage
+//     static uint8_t buffer[4096 * 2];  // Up to 4096 RGB565 pixels
+
+//     for (int i = 0; i < pixels; i++) {
+//         buffer[i * 2]     = color >> 8;
+//         buffer[i * 2 + 1] = color & 0xFF;
+//     }
+
+//     int remaining = w * h;
+//     while (remaining > 0) {
+//         int chunk = remaining > 4096 ? 4096 : remaining;
+//         display_write_data(buffer, chunk * 2);
+//         remaining -= chunk;
+//     }
+// }
+
+
 

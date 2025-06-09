@@ -10,8 +10,10 @@
 #include "led_matrix.h"
 #include "infrared.h"
 #include "screen.h"
+#include "matrix_rain.h"
 
 #include "microbit_v2.h"
+
 
 
 // Global I2C manager and app timer for infrared sensor
@@ -40,10 +42,12 @@ int main(void) {
     // TFT LCD DISPLAY
     spim_init();
     display_init();
+    init_rain();
 
-    display_fill_screen_red();
+
 
     while (1) {
-        nrf_delay_ms(10);
+        update_rain();
+        nrf_delay_ms(100);
     }
 }

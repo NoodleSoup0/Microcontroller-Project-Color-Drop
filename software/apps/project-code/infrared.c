@@ -1,8 +1,28 @@
 #include "infrared.h"
 #include "nrf_delay.h"
 #include <stdio.h>
+#include "screen.h"
+#include "font5x7.h"  
+#include <stdlib.h>  // for rand()
+
 
 #include <math.h>
+
+#define MAX_RAIN 50
+#define CHAR_HEIGHT 7
+#define DROP_SPEED 2
+
+typedef struct {
+    int x;
+    int y;
+    char c;
+    int active;
+    int bouncing;
+    int velocity;
+} RainDrop;
+
+static RainDrop rain_drops[MAX_RAIN];
+
 
 static const nrf_twi_mngr_t* i2c_manager = NULL;
 
@@ -51,48 +71,36 @@ bool amg8833_read_pixels(float *pixels_out) {
   return true;
 }
 
-//Use this to show TEMP values in °C in heatmap
-void print_amg8833_heatmap(float *pixels) {
-    printf("\nAMG8833 TEMP Heatmap (°C):\n");
-    for (int row = 7; row >= 0; row--) {         // bottom to top
-        for (int col = 0; col < 8; col++) {      // left to right
-            int index = row * 8 + col;           // natural indexing
-            printf("%5.1f", pixels[index]);
-            if (col < 7) printf(" ");
+void spawn_rain_drop() {
+    for (int i = 0; i < MAX_RAIN; i++) {
+        if (!rain_drops[i].active) {
+            rain_drops[i].x = rand() % 8;
+            rain_drops[i].y = -CHAR_HEIGHT; // Start above the screen
+            rain_drops[i].c = 'A' + rand() % 26;
+            rain_drops[i].active = 1;
+            rain_drops[i].bouncing = 0;
+            rain_drops[i].velocity = DROP_SPEED;
+            printf("Spawning char '%c' at column %d\n", rain_drops[i].c, rain_drops[i].x);
+
+            break;
+            
         }
-        printf("\n");
     }
 }
 
-char pixel_to_symbol(float temp) {
-    if (temp > 32.0) return '@';  // Hot (hand center)
-    if (temp > 30.0) return '#';  // Warm (edges of hand)
-    if (temp > 28.0) return '*';  // Mild
-    if (temp > 23.0) return '*';
-    return '.';
+
+void draw_char(int x, int y, char c, uint16_t fg, uint16_t bg) {
+    const uint8_t *bitmap = font5x7[c - 32];
+    for (int i = 0; i < 5; i++) {
+        uint8_t line = bitmap[i];
+        for (int j = 0; j < 7; j++) {
+            uint16_t color = (line & 1) ? fg : bg;
+            draw_pixel(x + i, y + j, color);  // Implement draw_pixel()
+            line >>= 1;
+        }
+    }
 }
 
-// UPSIDE DOWN SENSOR heatmap layout
-//  8  7  6  5  4  3  2  1
-// 16 15 14 13 12 11 10  9
-// 24 23 22 21 20 19 18 17
-// 32 31 30 29 28 27 26 25
-// 40 39 38 37 36 35 34 33
-// 48 47 46 45 44 43 42 41
-// 56 55 54 53 52 51 50 49
-// 64 63 62 61 60 59 58 57
-// void print_amg8833_ascii_heatmap(float *pixels) {
-//     printf("\nAMG8833 Thermal View (1–64, flipped columns):\n");
-
-//     for (int row = 0; row < 8; row++) {          // top to bottom
-//         for (int col = 7; col >= 0; col--) {     // right to left
-//             int index = row * 8 + col;           // raw data index (0–63)
-//             char symbol = pixel_to_symbol(pixels[index]);
-//             printf("%c ", symbol);
-//         }
-//         printf("\n");
-//     }
-// }
 
 // RIGHT SIDE UP heatmap layout
 // 57 58 59 60 61 62 63 64
@@ -103,23 +111,121 @@ char pixel_to_symbol(float temp) {
 // 17 18 19 20 21 22 23 24
 //  9 10 11 12 13 14 15 16
 //  1  2  3  4  5  6  7  8
-void print_amg8833_ascii_heatmap(float *pixels) {
-    printf("\nAMG8833 Pixel Number Layout (1–64):\n");
-    for (int row = 7; row >= 0; row--) {         // bottom to top
-        for (int col = 0; col < 8; col++) {      // left to right
-            int index = row * 8 + col;           // natural indexing
-            char symbol = pixel_to_symbol(pixels[index]);
-            printf("%c ", symbol);
+
+uint16_t temperature_to_color(float temp) {
+    // Clamp between 20 and 40°C for display
+    if (temp < 20) temp = 20;
+    if (temp > 40) temp = 40;
+
+    // Normalize temp to 0-255
+    uint8_t intensity = (uint8_t)(255 * (temp - 20) / 20);
+
+    // Create a gradient: Blue → Green → Red
+    uint8_t r = 0, g = 0, b = 0;
+    if (intensity < 128) {
+        b = 255 - 2 * intensity;
+        g = 2 * intensity;
+    } else {
+        g = 255 - 2 * (intensity - 128);
+        r = 2 * (intensity - 128);
+    }
+
+    // Convert RGB888 to RGB565
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
+void update_rain_drops(float *thermal_pixels) {
+    for (int i = 0; i < MAX_RAIN; i++) {
+        if (!rain_drops[i].active) continue;
+
+        int grid_row = (rain_drops[i].y + CHAR_HEIGHT) / 40;
+        int col = rain_drops[i].x;
+        int index = grid_row * 8 + col;
+
+        float temp = (grid_row >= 0 && grid_row < 8) ? thermal_pixels[index] : 0;
+
+        if (temp > 23.0f && rain_drops[i].y + CHAR_HEIGHT >= grid_row * 40) {
+            // Bounce logic
+            if (!rain_drops[i].bouncing) {
+                rain_drops[i].bouncing = 1;
+                rain_drops[i].velocity = -DROP_SPEED * 2;  // bounce upward
+            }
         }
-        printf("\n");
+
+        rain_drops[i].y += rain_drops[i].velocity;
+
+        if (rain_drops[i].bouncing) {
+            rain_drops[i].velocity++;  // simulate gravity
+            if (rain_drops[i].velocity > DROP_SPEED) {
+                rain_drops[i].bouncing = 0;
+                rain_drops[i].velocity = DROP_SPEED;
+            }
+        }
+
+        if (rain_drops[i].y > 320) {
+            rain_drops[i].active = 0;
+        }
     }
 }
 
+void draw_rain_drops() {
+    for (int i = 0; i < MAX_RAIN; i++) {
+        if (rain_drops[i].active) {
+            int x_pixel = rain_drops[i].x * 30 + 10;  // Centered in block
+            int y_pixel = rain_drops[i].y;
+            draw_char(x_pixel, y_pixel, rain_drops[i].c, 0xFFFF, 0x0000);  // white on black
+            printf("Rain char '%c' at x=%d y=%d\n", rain_drops[i].c, x_pixel, y_pixel);
+
+        }
+    }
+}
+
+
+void draw_heatmap_with_rain(float *pixels) {
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            int index = row * 8 + col;
+            float temp = pixels[index];
+            uint16_t bg_color = temperature_to_color(temp);
+
+            // Block coordinates
+            int x = col * 30;
+            int y = row * 40;
+
+            // Default: just draw filled color block
+            draw_filled_rect(x, y, 30, 40, bg_color);
+
+            // Now check: is a rain drop here?
+            for (int i = 0; i < MAX_RAIN; i++) {
+                if (!rain_drops[i].active) continue;
+
+                // Check if this drop is inside this block
+                int drop_col = rain_drops[i].x;
+                int drop_y = rain_drops[i].y;
+
+                if (drop_col == col && drop_y >= y && drop_y < y + 40) {
+                    int char_x = x + 10;
+                    int char_y = drop_y;
+
+                    draw_char(char_x, char_y, rain_drops[i].c, 0xFFFF, bg_color);  // white on temperature color
+                }
+            }
+        }
+    }
+}
+
+
 void infrared_timer_callback(void* p_context) {
-    extern float thermal_pixels[64];  // if not in same file
+    extern float thermal_pixels[64];
 
     if (amg8833_read_pixels(thermal_pixels)) {
-        print_amg8833_ascii_heatmap(thermal_pixels);
+        update_rain_drops(thermal_pixels);
+        draw_heatmap_with_rain(thermal_pixels);  // Unified render
+
+        // Spawn new drop occasionally
+        if (rand() % 2 == 0) {
+            spawn_rain_drop();
+        }
     } else {
         printf("Failed to read AMG8833 data.\n");
     }

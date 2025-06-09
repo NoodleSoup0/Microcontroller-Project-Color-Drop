@@ -16,3 +16,4 @@ bool amg8833_read_pixels(float *pixels_out);
 void print_amg8833_ascii_heatmap(float *pixels);
 void print_amg8833_heatmap(float *pixels);
 void infrared_timer_callback(void *context);
+uint16_t temperature_to_color(float temp);
