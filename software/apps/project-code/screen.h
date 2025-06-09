@@ -5,24 +5,23 @@
 #include "nrfx_spim.h"
 
 // Pin definitions for micro:bit v2
-#define RESET_PIN  12
-#define DC_PIN     8
-#define SCK_PIN    13
-#define MISO_PIN   14  
-#define MOSI_PIN   15
-#define CS_PIN     16
+#define RESET_PIN EDGE_P12
+#define DC_PIN EDGE_P8
+#define SCK_PIN EDGE_P13
+#define MISO_PIN EDGE_P14
+#define MOSI_PIN EDGE_P15
+#define CS_PIN EDGE_P16
 
-// extern const nrfx_spim_t SPIM_INST;
+extern const nrfx_spim_t SPIM_INST;
 
-// void spim_init(void);
-// void ili9341_reset(void);
-// void ili9341_init(void);
-// void send_command(uint8_t cmd);
-// void send_data(uint8_t *data, size_t length);
-// void set_address_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
-// void draw_pixel(uint16_t x, uint16_t y, uint16_t color);
-// uint16_t rgb_to_565(uint8_t r, uint8_t g, uint8_t b);
-// void fill_screen(uint16_t color);
+// Function prototypes
+void spim_init(void);
+void display_write_command(uint8_t cmd);
+void display_write_data(uint8_t* data, size_t length);
+void display_send_command_with_data(uint8_t cmd, const uint8_t *data, size_t len);
+void display_reset(void);
+void display_init(void);
+void display_fill_screen_red(void);
 
 // void test_spi_write_with_led(void);
 
