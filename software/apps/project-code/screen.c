@@ -9,7 +9,8 @@
 const nrfx_spim_t SPIM_INST = NRFX_SPIM_INSTANCE(2);
 
 // Initialize the SPIM peripheral
-void spim_init(void) {
+void spim_init(void)
+{
     nrfx_spim_config_t spim_config = NRFX_SPIM_DEFAULT_CONFIG;
     spim_config.sck_pin = SCK_PIN;
     spim_config.mosi_pin = MOSI_PIN;
@@ -33,16 +34,19 @@ void spim_init(void) {
 }
 
 // Chip Select control functions
-static void cs_select(void) {
+static void cs_select(void)
+{
     nrf_gpio_pin_clear(CS_PIN);
 }
 
-static void cs_deselect(void) {
+static void cs_deselect(void)
+{
     nrf_gpio_pin_set(CS_PIN);
 }
 
 // Write command
-void display_write_command(uint8_t cmd) {
+void display_write_command(uint8_t cmd)
+{
     nrf_gpio_pin_clear(DC_PIN); // Command mode
     cs_select();
 
@@ -53,10 +57,10 @@ void display_write_command(uint8_t cmd) {
         .p_tx_buffer = &cmd,
         .tx_length = 1,
         .p_rx_buffer = NULL,
-        .rx_length = 0
-    };
+        .rx_length = 0};
     nrfx_err_t err = nrfx_spim_xfer(&SPIM_INST, &xfer, 0);
-    if (err != NRFX_SUCCESS) {
+    if (err != NRFX_SUCCESS)
+    {
         printf("SPI transfer failed with error: 0x%08X\n", err);
     }
 
@@ -64,7 +68,8 @@ void display_write_command(uint8_t cmd) {
 }
 
 // Write data
-void display_write_data(uint8_t* data, size_t length) {
+void display_write_data(uint8_t *data, size_t length)
+{
     nrf_gpio_pin_set(DC_PIN); // Data mode
     cs_select();
 
@@ -72,10 +77,10 @@ void display_write_data(uint8_t* data, size_t length) {
         .p_tx_buffer = data,
         .tx_length = length,
         .p_rx_buffer = NULL,
-        .rx_length = 0
-    };
+        .rx_length = 0};
     nrfx_err_t err = nrfx_spim_xfer(&SPIM_INST, &xfer, 0);
-    if (err != NRFX_SUCCESS) {
+    if (err != NRFX_SUCCESS)
+    {
         printf("SPI transfer failed with error: 0x%08X\n", err);
     }
 
@@ -83,13 +88,16 @@ void display_write_data(uint8_t* data, size_t length) {
 }
 
 // Helper to send command + data
-void display_send_command_with_data(uint8_t cmd, const uint8_t *data, size_t len) {
+void display_send_command_with_data(uint8_t cmd, const uint8_t *data, size_t len)
+{
     display_write_command(cmd);
-    if (len) display_write_data((uint8_t *)data, len);
+    if (len)
+        display_write_data((uint8_t *)data, len);
 }
 
 // Reset display
-void display_reset(void) {
+void display_reset(void)
+{
     nrf_gpio_pin_set(RESET_PIN);
     nrf_delay_ms(10);
     nrf_gpio_pin_clear(RESET_PIN);
@@ -99,7 +107,8 @@ void display_reset(void) {
 }
 
 // Initialize display
-void display_init(void) {
+void display_init(void)
+{
     // Reset display first
     display_reset();
 
@@ -181,16 +190,14 @@ void display_init(void) {
     uint8_t gmctrp1_data[] = {
         0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08,
         0x4E, 0xF1, 0x37, 0x07, 0x10, 0x03,
-        0x0E, 0x09, 0x00
-    };
+        0x0E, 0x09, 0x00};
     display_send_command_with_data(0xE0, gmctrp1_data, sizeof(gmctrp1_data));
 
     // Negative Gamma Correction (0xE1) - 15 bytes
     uint8_t gmctrn1_data[] = {
         0x00, 0x0E, 0x14, 0x03, 0x11, 0x07,
         0x31, 0xC1, 0x48, 0x08, 0x0F, 0x0C,
-        0x31, 0x36, 0x0F
-    };
+        0x31, 0x36, 0x0F};
     display_send_command_with_data(0xE1, gmctrn1_data, sizeof(gmctrn1_data));
 
     // Exit Sleep (0x11)
@@ -202,77 +209,58 @@ void display_init(void) {
     nrf_delay_ms(150);
 }
 
-
-void set_address_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+void set_address_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
     uint8_t data[4];
 
     // Column address set
     display_write_command(0x2A);
-    data[0] = x0 >> 8; data[1] = x0 & 0xFF;
-    data[2] = x1 >> 8; data[3] = x1 & 0xFF;
+    data[0] = x0 >> 8;
+    data[1] = x0 & 0xFF;
+    data[2] = x1 >> 8;
+    data[3] = x1 & 0xFF;
     display_write_data(data, 4);
 
     // Page address set
     display_write_command(0x2B);
-    data[0] = y0 >> 8; data[1] = y0 & 0xFF;
-    data[2] = y1 >> 8; data[3] = y1 & 0xFF;
+    data[0] = y0 >> 8;
+    data[1] = y0 & 0xFF;
+    data[2] = y1 >> 8;
+    data[3] = y1 & 0xFF;
     display_write_data(data, 4);
 
     // Memory write
     display_write_command(0x2C);
 }
 //////////////////////////////// DRAW FUNCTIONS //
-void draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
-    if (x >= 240 || y >= 320) return;  // Bounds check
+void draw_pixel(uint16_t x, uint16_t y, uint16_t color)
+{
+    if (x >= 240 || y >= 320)
+        return; // Bounds check
 
     set_address_window(x, y, x, y);
-    uint8_t data[2] = { color >> 8, color & 0xFF };  // RGB565
+    uint8_t data[2] = {color >> 8, color & 0xFF}; // RGB565
     display_write_data(data, 2);
 }
 
-
-
-void draw_filled_rect(int x, int y, int w, int h, uint16_t color) {
+void draw_filled_rect(int x, int y, int w, int h, uint16_t color)
+{
     // Set column address
-    uint8_t col_addr[] = { x >> 8, x & 0xFF, (x + w - 1) >> 8, (x + w - 1) & 0xFF };
+    uint8_t col_addr[] = {x >> 8, x & 0xFF, (x + w - 1) >> 8, (x + w - 1) & 0xFF};
     display_send_command_with_data(0x2A, col_addr, 4);
 
     // Set row address
-    uint8_t row_addr[] = { y >> 8, y & 0xFF, (y + h - 1) >> 8, (y + h - 1) & 0xFF };
+    uint8_t row_addr[] = {y >> 8, y & 0xFF, (y + h - 1) >> 8, (y + h - 1) & 0xFF};
     display_send_command_with_data(0x2B, row_addr, 4);
 
     // Memory write
     display_write_command(0x2C);
 
     // Prepare pixel data
-    uint8_t pixel[2] = { color >> 8, color & 0xFF };
+    uint8_t pixel[2] = {color >> 8, color & 0xFF};
 
-    for (int i = 0; i < w * h; i++) {
+    for (int i = 0; i < w * h; i++)
+    {
         display_write_data(pixel, 2);
     }
 }
-
-// void draw_filled_rect(int x, int y, int w, int h, uint16_t color) {
-//     // Set address window
-//     set_address_window(x, y, x + w - 1, y + h - 1);
-
-//     // Prepare full buffer
-//     int pixels = w * h;
-//     if (pixels > 4096) pixels = 4096; // Cap to avoid huge stack usage
-//     static uint8_t buffer[4096 * 2];  // Up to 4096 RGB565 pixels
-
-//     for (int i = 0; i < pixels; i++) {
-//         buffer[i * 2]     = color >> 8;
-//         buffer[i * 2 + 1] = color & 0xFF;
-//     }
-
-//     int remaining = w * h;
-//     while (remaining > 0) {
-//         int chunk = remaining > 4096 ? 4096 : remaining;
-//         display_write_data(buffer, chunk * 2);
-//         remaining -= chunk;
-//     }
-// }
-
-
-

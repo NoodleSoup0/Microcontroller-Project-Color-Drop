@@ -19,6 +19,7 @@ include ../../boards/microbit_v2/Board.mk
 # Include main Makefile
 include $(NRF_BASE_DIR)/make/AppMakefile.mk
 
+
 flash:
-	cp _build/project-code_sdk16_blank.hex "/Volumes/MICROBIT/"
-flash_display: flash
+	cp _build/gesture-code_sdk16_blank.hex "/Volumes/MICROBIT 1/"
+flash_gesture: flash
