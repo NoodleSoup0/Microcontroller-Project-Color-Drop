@@ -7,6 +7,11 @@ As letters fall, they bounce off the user’s hand and accumulate if the hand re
 
 This project is built on the **Northwestern Micro:bit v2 Base** starter code and targets embedded interaction using infrared sensing and a TFT LCD display.
 
+
+## Project Demo
+
+[![Watch the Color Drop demo](asset/Color_Drop_Thumbnail.png)](https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing)
+
 ---
 
 ## Project Goals
