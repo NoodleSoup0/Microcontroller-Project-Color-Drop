@@ -10,7 +10,7 @@ This project is built on the **Northwestern Micro:bit v2 Base** starter code and
 
 ## Project Demo
 
-[![Watch the Color Drop demo](asset/Color_Drop_Thumbnail.png.png)](https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing)
+[![Watch the Color Drop demo](Color_Drop_Thumnail.png.png)](https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing)
 
 ---
 
