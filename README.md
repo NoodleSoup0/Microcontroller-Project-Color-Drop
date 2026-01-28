@@ -8,16 +8,16 @@ As letters fall, they bounce off the user’s hand and accumulate if the hand re
 This project is built on the **Northwestern Micro:bit v2 Base** starter code and targets embedded interaction using infrared sensing and a TFT LCD display.
 
 
-## Project Demo
-
-<p align="center">
-  Click the image to watch a short demonstration of hand interaction, letter physics, and gesture-based controls in real time.
-</p>
+<h2 align="center">Project Demo</h2>
 
 <p align="center">
   <a href="https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing">
     <img src="asset/Color_Drop_Thumnail.png.png" alt="Watch the Color Drop Demo" width="450"/>
   </a>
+</p>
+
+<p align="center">
+  Click the image to watch a short demonstration of hand interaction, letter physics, and gesture-based controls in real time.
 </p>
 
 ---
