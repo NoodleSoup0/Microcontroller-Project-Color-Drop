@@ -10,7 +10,11 @@ This project is built on the **Northwestern Micro:bit v2 Base** starter code and
 
 ## Project Demo
 
-[![Watch the Color Drop demo](asset/Color_Drop_Thumnail.png.png)](https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing)
+<a href="https://drive.google.com/file/d/1W3JM-_MqVOVMpuiuJbfb1_HKTFjMwz2o/view?usp=sharing">
+  <img src="asset/Color_Drop_Thumnail.png.png" alt="Watch the Color Drop Demo" width="450"/>
+</a>
+
+> Click the image to watch a short demonstration of hand interaction, letter physics, and gesture-based controls in real time.
 
 ---
 
